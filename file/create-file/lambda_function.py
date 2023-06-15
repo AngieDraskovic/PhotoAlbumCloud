@@ -10,7 +10,6 @@ dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('PhotoAlbums')
 
 def lambda_handler(event, context):
-    
     if 'body' not in event:
         return {
             'statusCode': 400,
@@ -71,7 +70,8 @@ def lambda_handler(event, context):
     try:
         file_content = base64.b64decode(file_content_base64)
         
-        key = username + "|" + album_name + "|" + file_name
+        # replace '|' with '/'
+        key = f"{username}/{album_name}/{file_name}"
         
         table.update_item(
             Key={
@@ -89,7 +89,6 @@ def lambda_handler(event, context):
         
         s3.put_object(Bucket='photoalbumbucket', Key=key, Body=file_content, ContentType=file_type)
 
-        
     except ClientError as e:
         return {
             'statusCode': 500,

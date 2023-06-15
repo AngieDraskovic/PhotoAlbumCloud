@@ -6,7 +6,6 @@ cognito = boto3.client("cognito-idp")
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('PhotoAlbums')
 
-
 def lambda_handler(event, context):
     if 'body' not in event:
         return create_response(400, {'message':'Bad Request: Missing body'})
@@ -25,15 +24,33 @@ def lambda_handler(event, context):
         return create_response(409, {'message':'Album with this name already exists'})
 
     try:
-        create_album(username, album_name, timestamp)
+        # split album_name by '/' to get parent albums
+        albums = album_name.split('/')
+        parent_album = ''
+        
+        # iterate over the parent albums and check if they exist
+        for album in albums[:-1]:
+            if parent_album:
+                parent_album += '/' + album
+            else:
+                parent_album = album
+            
+            if not album_exists(username, parent_album):
+                return create_response(400, {'message':'Bad Request: Parent album does not exist'})
+        
+        table.put_item(Item={
+            'PartitionKey': username,
+            'SortKey': album_name,
+            'CreatedAt': timestamp,
+            'Initial': False,
+            'Files': [],
+            'SharedWith': []
+        })
+
     except Exception as e:
         return error_response(500, str(e))
     
     return create_response(201, {'message':'Photo album created'})
-
-
-
-
 
 # helper functions
 
@@ -43,18 +60,7 @@ def create_response(status_code, body):
         'body': json.dumps(body)
     }
 
-
 def album_exists(username, album_name):
     response = table.get_item(Key={'PartitionKey': username, 'SortKey': album_name})
     return response.get('Item') is not None
 
-
-def create_album(username, album_name, timestamp):
-    table.put_item(Item={
-        'PartitionKey': username,
-        'SortKey': album_name,
-        'CreatedAt': timestamp,
-        'Initial': False,
-        'Files': [],
-        'SharedWith': []
-    })

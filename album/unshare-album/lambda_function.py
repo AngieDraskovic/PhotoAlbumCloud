@@ -1,11 +1,9 @@
 import json
 import boto3
-from botocore.exceptions import ClientError
 
-cognito = boto3.client("cognito-idp")
+cognito = boto3.client('cognito-idp')
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('PhotoAlbums')
-
 
 def lambda_handler(event, context):
     if 'body' not in event:
@@ -13,81 +11,97 @@ def lambda_handler(event, context):
             'statusCode': 400,
             'body': json.dumps('Bad Request: Missing body')
         }
-
+    
     body = json.loads(event['body'])
-
+    access_token = event['headers']["authorization"].split(" ")[-1]
+    username_to_unshare = body.get('username_to_unshare', '')
     album_name = body.get('album_name', '')
-    unshare_with_username = body.get('unshare_with_username', '')
-
-    if not album_name or not unshare_with_username:
+    
+    username = cognito.get_user(AccessToken=access_token)['Username']
+    
+    if not username_to_unshare or not album_name:
         return {
             'statusCode': 400,
-            'body': json.dumps('Bad Request: Missing album name or unshare_with_username')
-        }
-
-    try:
-        user_response = cognito.admin_get_user(
-            UserPoolId='us-east-1_0nANLqqa6',
-            Username=unshare_with_username
-        )
-    except ClientError as e:
-        return {
-            'statusCode': 404,
-            'body': json.dumps({'error_message': 'User does not exist.'})
+            'body': json.dumps('Bad Request: Missing required fields')
         }
     
-
-    access_token = event['headers']["authorization"].split(" ")[-1]
-    username = cognito.get_user(AccessToken=access_token)['Username']
-
-    try:
-        response = table.get_item(
-            Key={
-                'PartitionKey': username,
-                'SortKey': album_name
-            }
-        )
-    except ClientError as e:
-        return {
-            'statusCode': 500,
-            'body': json.dumps({'error_message': str(e)})
+    # Query DynamoDB for the specified album
+    response = table.query(
+        KeyConditionExpression= "PartitionKey = :username and SortKey = :album_name",
+        ExpressionAttributeValues= {
+            ":username": username,
+            ":album_name": album_name
         }
-
-    if 'Item' not in response:
+    )
+        
+    if not response['Items']:
         return {
             'statusCode': 404,
             'body': json.dumps({'error_message': 'Album not found'})
         }
-
-    album = response['Item']
-    shared_with = album.get('SharedWith', [])
-
-    if unshare_with_username not in shared_with:
+    
+    for album in response['Items']:
+        if username_to_unshare in album['SharedWith']:
+            album['SharedWith'].remove(username_to_unshare)
+            table.update_item(
+                Key={
+                    'PartitionKey': username,
+                    'SortKey': album['SortKey']
+                },
+                UpdateExpression='SET SharedWith = :shared_with',
+                ExpressionAttributeValues={
+                    ':shared_with': album['SharedWith'],
+                }
+            )
+    
+    album_name += '/'
+    
+    # Query DynamoDB for the specified all its subalbums
+    response = table.query(
+        KeyConditionExpression= "PartitionKey = :username and begins_with(SortKey, :album_name)",
+        ExpressionAttributeValues= {
+            ":username": username,
+            ":album_name": album_name
+        }
+    )
+    
+    if not response['Items']:
         return {
             'statusCode': 404,
-            'body': json.dumps({'error_message': 'User not found in shared list'})
+            'body': json.dumps({'error_message': 'Subalbum not found'})
         }
-
-    shared_with.remove(unshare_with_username)
-
-    try:
-        table.update_item(
-            Key={
-                'PartitionKey': username,
-                'SortKey': album_name
-            },
-            UpdateExpression='SET SharedWith = :shared_with',
-            ExpressionAttributeValues={
-                ':shared_with': shared_with
-            }
-        )
-    except ClientError as e:
-        return {
-            'statusCode': 500,
-            'body': json.dumps({'error_message': str(e)})
-        }
+    
+    # Iterate over each album and update its 'SharedWith' attribute
+    for album in response['Items']:
+        if username_to_unshare in album['SharedWith']:
+            album['SharedWith'].remove(username_to_unshare)
+            table.update_item(
+                Key={
+                    'PartitionKey': username,
+                    'SortKey': album['SortKey']
+                },
+                UpdateExpression='SET SharedWith = :shared_with',
+                ExpressionAttributeValues={
+                    ':shared_with': album['SharedWith'],
+                }
+            )
+        
+        # Iterate over each file in the album and update its 'shared_with' attribute
+        for file in album['Files']:
+            if username_to_unshare in file['shared_with']:
+                file['shared_with'].remove(username_to_unshare)
+                table.update_item(
+                    Key={
+                        'PartitionKey': username,
+                        'SortKey': album['SortKey']
+                    },
+                    UpdateExpression='SET Files = :files',
+                    ExpressionAttributeValues={
+                        ':files': album['Files']
+                    }
+                )
 
     return {
         'statusCode': 200,
-        'body': json.dumps({'message': 'Album unshared successfully'})
+        'body': json.dumps({'message': 'Album unshared'})
     }

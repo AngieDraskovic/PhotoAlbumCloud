@@ -1,93 +1,108 @@
 import json
 import boto3
-from botocore.exceptions import ClientError
-cognito = boto3.client("cognito-idp")
+
+cognito = boto3.client('cognito-idp')
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('PhotoAlbums')
 
 def lambda_handler(event, context):
-
     if 'body' not in event:
         return {
             'statusCode': 400,
             'body': json.dumps('Bad Request: Missing body')
         }
-
-    body = json.loads(event['body'])
-
-    album_name = body.get('album_name', '')
-    share_with_username = body.get('share_with_username', '')
-
-    if not album_name or not share_with_username:
-        return {
-            'statusCode': 400,
-            'body': json.dumps('Bad Request: Missing album name or share_with_username')
-        }
-        
-    try:
-        user_response = cognito.admin_get_user(
-            UserPoolId='us-east-1_0nANLqqa6',
-            Username=share_with_username
-        )
-    except ClientError as e:
-        return {
-            'statusCode': 404,
-            'body': json.dumps({'error_message': 'User does not exist.'})
-        }
     
-
+    body = json.loads(event['body'])
     access_token = event['headers']["authorization"].split(" ")[-1]
+    username_to_share = body.get('username_to_share', '')
+    album_name = body.get('album_name', '')
+    
     username = cognito.get_user(AccessToken=access_token)['Username']
     
-
-    try:
-        response = table.get_item(
-            Key={
-                'PartitionKey': username,
-                'SortKey': album_name
-            }
-        )
-    except ClientError as e:
+    if not username_to_share or not album_name:
         return {
-            'statusCode': 500,
-            'body': json.dumps({'error_message': str(e)})
+            'statusCode': 400,
+            'body': json.dumps('Bad Request: Missing required fields')
         }
 
-    if 'Item' not in response:
+    
+    
+    # Query DynamoDB for the specified album
+    response = table.query(
+        KeyConditionExpression= "PartitionKey = :username and SortKey = :album_name",
+        ExpressionAttributeValues= {
+            ":username": username,
+            ":album_name": album_name
+        }
+    )
+        
+    if not response['Items']:
         return {
             'statusCode': 404,
             'body': json.dumps({'error_message': 'Album not found'})
         }
-
-    album = response['Item']
-    shared_with = album.get('SharedWith', [])
-
-    if share_with_username in shared_with:
-        return {
-            'statusCode': 409,
-            'body': json.dumps({'error_message': 'Album already shared with this user'})
-        }
-
-    shared_with.append(share_with_username)
-
-    try:
+        
+    
+    for album in response['Items']:
         table.update_item(
             Key={
                 'PartitionKey': username,
-                'SortKey': album_name
+                'SortKey': album['SortKey']
             },
-            UpdateExpression='SET SharedWith = :shared_with',
+            UpdateExpression='SET SharedWith = list_append(if_not_exists(SharedWith, :empty_list), :username_to_share)',
             ExpressionAttributeValues={
-                ':shared_with': shared_with
+                ':username_to_share': [username_to_share],
+                ':empty_list': []
             }
         )
-    except ClientError as e:
-        return {
-            'statusCode': 500,
-            'body': json.dumps({'error_message': str(e)})
+        
+    
+    album_name += '/'
+    
+    
+    # Query DynamoDB for the specified all its subalbums
+    response = table.query(
+        KeyConditionExpression= "PartitionKey = :username and begins_with(SortKey, :album_name)",
+        ExpressionAttributeValues= {
+            ":username": username,
+            ":album_name": album_name
         }
+    )
+    
+    if not response['Items']:
+        return {
+            'statusCode': 404,
+            'body': json.dumps({'error_message': 'Album not found'})
+        }
+    
+    # Iterate over each album and update its 'SharedWith' attribute
+    for album in response['Items']:
+        table.update_item(
+            Key={
+                'PartitionKey': username,
+                'SortKey': album['SortKey']
+            },
+            UpdateExpression='SET SharedWith = list_append(if_not_exists(SharedWith, :empty_list), :username_to_share)',
+            ExpressionAttributeValues={
+                ':username_to_share': [username_to_share],
+                ':empty_list': []
+            }
+        )
+        
+        # Iterate over each file in the album and update its 'shared_with' attribute
+        for file in album['Files']:
+            table.update_item(
+                Key={
+                    'PartitionKey': username,
+                    'SortKey': album['SortKey']
+                },
+                UpdateExpression='ADD Files[{}].shared_with :username_to_share'.format(file['file_name']),
+                ExpressionAttributeValues={
+                    ':username_to_share': {username_to_share}
+                }
+            )
 
     return {
         'statusCode': 200,
-        'body': json.dumps({'message': 'Album shared successfully'})
+        'body': json.dumps({'message': 'Album shared'})
     }
