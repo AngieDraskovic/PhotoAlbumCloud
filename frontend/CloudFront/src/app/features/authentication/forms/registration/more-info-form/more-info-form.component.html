@@ -1,0 +1,74 @@
+<form [formGroup]="moreInfoForm">
+  <h2 class="title">Additional Info</h2>
+
+  <div class="input input-container">
+    <app-form-field
+      class="input-field"
+      [formGroup]="moreInfoForm"
+      [controlName]="'name'"
+      [type]="'text'"
+      [icon]="'fas fa-user'"
+      [placeholder]="'Name'"
+      [errorMessages]="{
+          pattern: 'Only characters allowed',
+          minLength: 'Must have atleast 3 characters'
+        }"
+    >
+    </app-form-field>
+
+
+    <app-form-field
+      class="input-field"
+      [formGroup]="moreInfoForm"
+      [controlName]="'surname'"
+      [type]="'text'"
+      [icon]="'fas fa-user'"
+      [placeholder]="'Surname'"
+      [errorMessages]="{
+          pattern: 'Only characters allowed',
+          minLength: 'Must have atleast 3 characters'
+        }"
+    >
+    </app-form-field>
+  </div>
+
+  <app-form-field
+    class="input"
+    [formGroup]="moreInfoForm"
+    [controlName]="'email'"
+    [type]="'email'"
+    [icon]="'fas fa-envelope'"
+    [placeholder]="'Email'"
+    [errorMessages]="{
+      email: 'Please enter a valid email'
+    }"
+  >
+  </app-form-field>
+
+  <app-form-field
+    class="input"
+    [formGroup]="moreInfoForm"
+    [controlName]="'dateOfBirth'"
+    [type]="'text'"
+    [icon]="'fas fa-calendar-days'"
+    [placeholder]="'Date of birth [yyyy-mm-dd]'"
+    [errorMessages]="{
+      pattern: 'Must be in format [yyyy-mm-dd]'
+    }"
+  >
+  </app-form-field>
+
+  <div class="btn-container">
+    <app-back-button
+      [buttonText]="'BACK'"
+      (onBack)="navigateBack()">
+
+    </app-back-button>
+
+    <app-form-button
+      [form]="moreInfoForm"
+      [buttonText]="'FINISH'"
+      (onSubmit)="submitForm()">
+    </app-form-button>
+  </div>
+</form>

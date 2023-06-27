@@ -1,0 +1,35 @@
+<section id="sidebar" [class.hide]="hideMenu">
+  <a href="#" class="brand">
+    <i class='fa fa-dropbox'></i>
+    <span class="text">Album</span>
+  </a>
+  <ul class="side-menu top">
+    <li *ngFor="let item of navItems"
+        [routerLink]="[item.routeLink]"
+        routerLinkActive="active"
+    >
+      <a [routerLink]="[item.routeLink]"
+         routerLinkActive="active"
+         [routerLinkActiveOptions]="{exact: true}">
+        <i [class]="item.icon"></i>
+        <span class="text">
+          {{item.label}}
+        </span>
+      </a>
+    </li>
+  </ul>
+  <ul class="side-menu">
+    <li>
+      <a href="#">
+        <i class='fa fa-solid fa-gear'></i>
+        <span class="text">Settings</span>
+      </a>
+    </li>
+    <li>
+      <a (click)="logOut()" class="logout">
+        <i class='fa fa-solid fa-right-from-bracket'></i>
+        <span class="text">Logout</span>
+      </a>
+    </li>
+  </ul>
+</section>

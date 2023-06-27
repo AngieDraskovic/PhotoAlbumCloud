@@ -1,0 +1,96 @@
+<main>
+  <div class="head-title">
+    <div class="left">
+      <h1>My Albums</h1>
+      <ul class="breadcrumb" *ngIf="path.length == 0">
+        <li>
+          <a href="#" (click)="navigateHome()">Home</a>
+        </li>
+      </ul>
+
+      <ul class="breadcrumb" *ngIf="path.length == 1">
+        <li (click)="navigateHome()">
+          <a href="#" class="active">Home</a>
+        </li>
+        <li><i class='fa fa-chevron-right'></i></li>
+        <li *ngFor="let folder of path; let i = index">
+          <a href="#" (click)="navigateToFolderInPath(i)">{{ folder }}</a>
+        </li>
+      </ul>
+
+      <ul class="breadcrumb" *ngIf="path.length > 1">
+        <li>
+          <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="Example icon-button with a menu">
+            <mat-icon style="transform: rotate(90deg)">more_vert</mat-icon>
+          </button>
+
+          <mat-menu #menu="matMenu">
+            <button mat-menu-item (click)="navigateHome()">
+              <mat-icon>home</mat-icon>
+              <span>Home</span>
+            </button>
+            <button mat-menu-item *ngFor="let folder of pathWithoutLast; let i = index"
+                    (click)="navigateToFolderInPath(i)">
+              <mat-icon>folder</mat-icon>
+              <span>{{ folder }}</span>
+            </button>
+          </mat-menu>
+        </li>
+        <li><i class='fa fa-chevron-right'></i></li>
+        <li>
+          <a class="active">{{ path.slice(-1).pop() }}</a>
+        </li>
+      </ul>
+    </div>
+    <div class="right">
+      <a class="btn-download" (click)="openCreateAlbumDialog()">
+        <i class='fa fa-solid fa-plus-circle'></i> &nbsp;
+        <span class="text">
+        Create Album
+      </span>
+      </a>
+      <a *ngIf='albumName != "INITIAL"' class="btn-upload" (click)="openUploadFileDialog()">
+        <i class='fa fa-solid fa-plus-circle'></i> &nbsp;
+        <span class="text">
+        Upload File
+      </span>
+      </a>
+    </div>
+  </div>
+
+  <div class="table-data">
+    <div class="order">
+      <div class="head">
+        <h3>All Files</h3>
+        <i class='bx bx-search'></i>
+        <i class='bx bx-filter'></i>
+      </div>
+      <table>
+        <thead>
+        <tr>
+          <th>Name</th>
+          <th>Creation Date</th>
+          <th>Last Change</th>
+          <th>Size</th>
+          <th class="table-button"></th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <app-file-folder-row
+          class="table-line"
+          *ngFor="let item of allItems"
+          [item]="item"
+          [navigateToAlbum]="navigateToAlbum.bind(this)"
+          [deleteAlbum]="deleteAlbum.bind(this)"
+          [downloadFile]="downloadFile.bind(this)"
+          [deleteFile]="deleteFile.bind(this)"
+          [openShareFileDialog]="openShareFileDialog.bind(this)"
+          [openEditFileDialog]="openEditFileDialog.bind(this)"
+        >
+        </app-file-folder-row>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>

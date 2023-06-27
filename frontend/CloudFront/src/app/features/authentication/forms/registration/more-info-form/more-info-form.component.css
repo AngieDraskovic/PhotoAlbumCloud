@@ -1,0 +1,49 @@
+form {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.title {
+  font-size: 2.2rem;
+  color: #444;
+  margin-bottom: 10px;
+}
+
+.input {
+  max-width: 400px;
+  width: 100%;
+}
+
+.input-container  {
+  display: flex;
+  justify-content: space-between;
+}
+
+.input-container .input-field {
+  max-width: 190px;
+}
+
+.confirmation-method {
+  max-width: 400px;
+  width: 100%;
+}
+
+.captcha {
+  margin-top: 14px;
+  margin-bottom: 14px;
+}
+
+.btn-container {
+  max-width: 400px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+
+@media (max-width: 570px) {
+  form {
+    padding: 0 1.5rem;
+  }
+}

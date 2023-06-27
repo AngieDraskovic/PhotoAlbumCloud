@@ -1,0 +1,42 @@
+<main>
+  <div class="head-title">
+    <div class="left">
+      <h1>Shared With Me</h1>
+      <ul class="breadcrumb">
+        <li>
+          <a href="#">Home</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="table-data">
+    <div class="order">
+      <div class="head">
+        <h3>All Files</h3>
+        <i class='bx bx-search'></i>
+        <i class='bx bx-filter'></i>
+      </div>
+      <table>
+        <thead>
+        <tr>
+          <th>Name</th>
+          <th>Share Date</th>
+          <th>Shared By</th>
+          <th class="table-button"></th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <app-shared-file-row
+          class="table-line"
+          *ngFor="let file of sharedFiles"
+          [item]="file"
+          [downloadFile]="downloadFile.bind(this)"
+        >
+        </app-shared-file-row>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>

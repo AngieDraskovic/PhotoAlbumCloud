@@ -1,0 +1,120 @@
+<div class="container">
+  <div class="tab_box">
+    <button
+      class="tab_btn"
+      [class.active]="activeTab === 'signup'"
+      (click)="setActiveTab('signup')">
+      Sign Up
+    </button>
+    <button
+      class="tab_btn"
+      [class.active]="activeTab === 'referral'"
+      (click)="setActiveTab('referral')">
+      Referral
+    </button>
+    <div class="line" [ngStyle]="{ 'left.px': lineLeft }"></div>
+  </div>
+  <div class="content_box" *ngIf="activeTab === 'signup'">
+    <form [formGroup]="signupForm">
+      <app-form-field
+        class="input"
+        [formGroup]="signupForm"
+        [controlName]="'username'"
+        [type]="'text'"
+        [icon]="'fas fa-user'"
+        [placeholder]="'Username'"
+      >
+      </app-form-field>
+
+      <app-form-field
+        class="input"
+        [formGroup]="signupForm"
+        [controlName]="'password'"
+        [type]="'password'"
+        [icon]="'fas fa-lock'"
+        [placeholder]="'Password'"
+        [errorMessages]="{
+          pattern: 'Must have one uppercase and one numeric letter'
+        }"
+      >
+      </app-form-field>
+
+      <app-form-field
+        class="input"
+        [formGroup]="signupForm"
+        [controlName]="'confirmPassword'"
+        [type]="'password'"
+        [icon]="'fas fa-lock'"
+        [placeholder]="'Confirm password'"
+        [errorMessages]="{
+          matching: 'Passwords must match'
+        }"
+      >
+      </app-form-field>
+
+      <app-form-button
+        [form]="signupForm"
+        [buttonText]="'CONTINUE'"
+        (onSubmit)="submitForm()"
+      >
+      </app-form-button>
+    </form>
+  </div>
+
+  <div class="content_box" *ngIf="activeTab === 'referral'">
+    <form [formGroup]="referralForm">
+
+      <app-form-field
+        class="input"
+        [formGroup]="referralForm"
+        [controlName]="'referralUsername'"
+        [type]="'text'"
+        [icon]="'fas fa-user-group'"
+        [placeholder]="'Referral username'">
+      </app-form-field>
+
+      <app-form-field
+        class="input"
+        [formGroup]="referralForm"
+        [controlName]="'username'"
+        [type]="'text'"
+        [icon]="'fas fa-user'"
+        [placeholder]="'Username'"
+      >
+      </app-form-field>
+
+      <app-form-field
+        class="input"
+        [formGroup]="referralForm"
+        [controlName]="'password'"
+        [type]="'password'"
+        [icon]="'fas fa-lock'"
+        [placeholder]="'Password'"
+        [errorMessages]="{
+          pattern: 'Must have one uppercase and one numeric letter'
+        }"
+      >
+      </app-form-field>
+
+      <app-form-field
+        class="input"
+        [formGroup]="referralForm"
+        [controlName]="'confirmPassword'"
+        [type]="'password'"
+        [icon]="'fas fa-lock'"
+        [placeholder]="'Confirm password'"
+        [errorMessages]="{
+          matching: 'Passwords must match'
+        }"
+      >
+      </app-form-field>
+
+      <app-form-button
+        [form]="referralForm"
+        [buttonText]="'CONTINUE'"
+        (onSubmit)="submitForm()">
+        >
+      </app-form-button>
+    </form>
+  </div>
+</div>

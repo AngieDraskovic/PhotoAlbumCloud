@@ -1,0 +1,16 @@
+<app-account-creation-form
+  class="step"
+  [ngClass]="animationType + (currentStep === RegisterStep.AccountCreationForm ? ' active' : '')"
+  (onFormSubmit)="nextStep()"
+>
+
+</app-account-creation-form>
+
+<app-more-info-form
+  class="step"
+  [ngClass]="animationType + (currentStep === RegisterStep.MoreInfoForm ? ' active' : '')"
+  (onFormSubmit)="nextStep()"
+  (onBack)="onBack()"
+>
+
+</app-more-info-form>

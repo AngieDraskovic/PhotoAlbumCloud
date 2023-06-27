@@ -1,0 +1,6 @@
+<button class="btn solid"
+        [class.btn-disabled]="form.invalid"
+        [disabled]="form.invalid"
+        (click)="submitForm()">
+  {{buttonText}}
+</button>

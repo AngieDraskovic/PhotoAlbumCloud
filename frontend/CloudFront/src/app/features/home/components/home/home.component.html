@@ -1,0 +1,24 @@
+<app-navigation (onToggleSideNav)="onToggleSideNav($event)"></app-navigation>
+
+<section id="content" [class.content-expanded]="contentExpanded">
+  <nav>
+    <i class='fa fa-solid fa-bars' (click)="toggleMenu()"></i>
+    <a href="#" class="nav-link">Categories</a>
+    <form action="#">
+      <div class="form-input">
+        <input type="search" placeholder="Search...">
+        <button type="submit" class="search-btn"><i class='fa fa-magnifying-glass'></i></button>
+      </div>
+    </form>
+    <a href="#" class="notification">
+      <i class='fa fa-solid fa-bell'></i>
+      <span class="num">8</span>
+    </a>
+    <a href="#" class="profile">
+      <img ngSrc="assets/images/profile.png" height="40" width="60" alt="">
+    </a>
+    <span>{{ username }}</span>
+  </nav>
+
+  <router-outlet></router-outlet>
+</section>

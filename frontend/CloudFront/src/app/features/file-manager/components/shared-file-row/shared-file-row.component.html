@@ -1,0 +1,23 @@
+<tr>
+  <td>
+    <img [ngSrc]="getImageSrc()" width="60" height="40" alt="">
+    <p>{{ getName() }}</p>
+  </td>
+  <td>{{ getShareDate() | dateFormat }}</td>
+  <td class="this">
+    <img ngSrc="assets/images/profile.png" width="40" height="40" alt="">
+    <p>{{ getSharedBy() }}</p>
+  </td>
+  <td>
+    <button mat-icon-button [matMenuTriggerFor]="folderMenu">
+      <mat-icon>more_vert</mat-icon>
+    </button>
+
+    <mat-menu #folderMenu="matMenu">
+      <button mat-menu-item (click)="downloadFileClick()">
+        <mat-icon>download</mat-icon>
+        <span>Download</span>
+      </button>
+    </mat-menu>
+  </td>
+</tr>

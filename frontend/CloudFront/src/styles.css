@@ -1,0 +1,75 @@
+/* You can add global styles to this file, and also import other style files */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700;800&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Poppins:wght@400;500;600;700&display=swap');
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body,
+input {
+  font-family: "Poppins", sans-serif;
+}
+
+a {
+  text-decoration: none;
+}
+
+li {
+  list-style: none;
+}
+
+:root {
+  --poppins: 'Poppins', sans-serif;
+  --lato: 'Lato', sans-serif;
+
+  --light: #F9F9F9;
+  --blue-primary: #4d84e2;
+  --blue: #3C91E6;
+  --light-blue: #CFE8FF;
+  --grey: #eee;
+  --dark-grey: #AAAAAA;
+  --dark: #342E37;
+  --red: rgba(219, 80, 74, 0.8);
+  --yellow: #FFCE26;
+  --light-yellow: #FFF2C6;
+  --orange: #FD7238;
+  --light-orange: #FFE0D3;
+  --green: #20b220;
+  --lightGreen: #9bffa9;;
+
+  font-family: "Poppins", sans-serif;
+  --main-hue: 208;
+  --main-color: hsl(var(--main-hue), 92%, 54%);
+  --main-color-hover: hsl(var(--main-hue), 77%, 48%);
+  --light-main-color: hsl(var(--main-hue), 91%, 55%);
+  --text-color: #000;
+  --bg-color: #fff;
+  --light-text-color: #9ca7b6;
+  --input-bg: hsla(var(--main-hue), 50%, 50%, 6.5%);
+  --input-bg-hover: hsla(var(--main-hue), 50%, 50%, 14%);
+  --input-text: #8c9aaf;
+}
+
+html {
+  overflow-x: hidden;
+}
+
+body.dark {
+  --light: #0C0C1E;
+  --grey: #060714;
+  --dark: #FBFBFB;
+}
+
+body {
+  background: var(--grey);
+  overflow-x: hidden;
+}
+
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }

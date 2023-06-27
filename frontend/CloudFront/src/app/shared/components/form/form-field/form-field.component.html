@@ -1,0 +1,8 @@
+<div class="input-field" [formGroup]="formGroup"
+     [class.input-field-error]="formGroup.get(controlName)?.invalid && formGroup.get(controlName)?.touched">
+  <i class="{{icon}}"></i>
+  <input [type]="type" [formControlName]="controlName" [placeholder]="placeholder" [readOnly]="disabled"/>
+  <span class="error-text" *ngIf="isInvalidAndTouched()">
+    {{getErrorMessage()}}
+  </span>
+</div>

@@ -1,0 +1,95 @@
+.find-friends-container {
+  width: 400px;
+  height: 70vh;
+  box-shadow: 5px 5px 20px #0C44A4;
+
+  overflow-y: hidden;
+}
+
+.find-friends-header {
+  background: rgb(12, 68, 164);
+  background: linear-gradient(90deg, var(--blue-primary) 0%, var(--blue) 100%);
+}
+
+.find-friends-header .heading {
+  color: #F1F1F1;
+  font-size: 24px;
+  font-weight: 500;
+  width: 100%;
+  text-align: center;
+  padding: 25px 0;
+}
+
+.find-friends-header .search {
+  position: relative;
+}
+
+.find-friends-header .search i {
+  position: absolute;
+  color: #D0E7F8;
+  width: 20px;
+  top: 20px;
+  left: 40px;
+}
+
+.find-friends-header .search input {
+  border: none;
+  outline: none;
+  margin: 0 25px 25px 25px;
+  width: calc(100% - 50px);
+  font-size: 16px;
+  color: #D0E7F8;
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 15px 50px;
+  border-radius: 40px;
+}
+
+.find-friends-header .search input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.find-friends-body {
+  background-color: #D0E7F8;
+
+  height: 55vh;
+  overflow-y: auto;
+}
+
+.user-row {
+  padding: 15px 25px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+}
+
+.user-info img {
+  width: 70px;
+  border-radius: 50%;
+  margin-right: 15px;
+}
+
+.user-info span {
+  color: #0C44A4;
+  font-weight: bold;
+}
+
+.action-follow {
+  border: none;
+  outline: none;
+  background: rgb(165, 10, 30);
+  background: linear-gradient(90deg, rgba(165, 10, 30, 1) 0%, rgba(200, 0, 0, 1) 100%);
+  border-radius: 40px;
+  color: #FFF;
+  height: 40px;
+  width: 100px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+
+

@@ -1,0 +1,43 @@
+<tr (click)="handleClick()">
+  <td>
+    <img [ngSrc]="getImageSrc()" width="60" height="40" alt="">
+    <p>{{ getName() }}</p>
+  </td>
+  <td>{{ getCreationTime() | dateFormat }}</td>
+  <td>{{ getLastModifiedTime() | dateFormat }}</td>
+  <td>{{ getFileSize() }}</td>
+  <td>
+    <button mat-icon-button *ngIf="isFile" [matMenuTriggerFor]="fileMenu" (click)="$event.stopPropagation();">
+      <mat-icon>more_vert</mat-icon>
+    </button>
+    <button mat-icon-button *ngIf="!isFile" [matMenuTriggerFor]="folderMenu" (click)="$event.stopPropagation();">
+      <mat-icon>more_vert</mat-icon>
+    </button>
+
+    <mat-menu #fileMenu="matMenu">
+      <button mat-menu-item (click)="downloadFileClick()">
+        <mat-icon>download</mat-icon>
+        <span>Download</span>
+      </button>
+      <button mat-menu-item (click)="openShareFileDialogClick()">
+        <mat-icon>share</mat-icon>
+        <span>Share</span>
+      </button>
+      <button mat-menu-item (click)="openEditFileDialogClick()">
+        <mat-icon>edit</mat-icon>
+        <span>Edit</span>
+      </button>
+      <button mat-menu-item (click)="deleteFileClick()">
+        <mat-icon>delete</mat-icon>
+        <span>Delete</span>
+      </button>
+    </mat-menu>
+
+    <mat-menu #folderMenu="matMenu">
+      <button mat-menu-item (click)="deleteAlbumClick()">
+        <mat-icon>delete</mat-icon>
+        <span>Delete</span>
+      </button>
+    </mat-menu>
+  </td>
+</tr>

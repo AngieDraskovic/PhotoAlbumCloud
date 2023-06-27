@@ -1,0 +1,69 @@
+<div class="dialog">
+  <form [formGroup]="uploadFileForm" (keydown.enter)="$event.preventDefault()">
+    <h2 class="title">Upload File</h2>
+
+    <app-form-field
+      class="input"
+      [formGroup]="uploadFileForm"
+      [controlName]="'name'"
+      [type]="'text'"
+      [icon]="'fa fa-file'"
+      [placeholder]="'File name'"
+      [disabled]="true"
+      [errorMessages]="{
+          pattern: 'No special characters allowed'
+       }"
+    >
+    </app-form-field>
+
+    <app-form-field
+      class="input"
+      [formGroup]="uploadFileForm"
+      [controlName]="'description'"
+      [type]="'text'"
+      [icon]="'fa fa-message'"
+      [placeholder]="'Description'"
+    >
+    </app-form-field>
+
+    <div class="tag-input">
+      <div class="input-field">
+        <i class="fa fa-tag"></i>
+        <input type="text"
+               [placeholder]="tags.length >= maxTags ? 'Max number of tags reached!' : 'Add a tag...'"
+               #tagInput
+               maxlength="25"
+               autocomplete="off"
+               (keyup.enter)="addTag(tagInput.value);
+              tagInput.value=''"
+               [disabled]="tags.length >= maxTags"/>
+      </div>
+
+      <div class="tags">
+        <span class="tag" *ngFor="let tag of tags; index as i">
+          {{tag}} <span class="material-icons-outlined remove-btn" (click)="removeTag(i)"><i class='fa fa-circle-xmark'></i> &nbsp;</span>
+        </span>
+      </div>
+    </div>
+
+    <div class="file-input-container">
+      <input type="file" class="upload-box" (change)="onFileSelected($event)"/>
+    </div>
+
+    <div class="btn-container">
+      <app-back-button
+        [buttonText]="'BACK'"
+        (onBack)="cancel()"
+      >
+
+      </app-back-button>
+
+      <app-form-button
+        [form]="uploadFileForm"
+        [buttonText]="'Create'"
+        (onSubmit)="create()"
+        >
+      </app-form-button>
+    </div>
+  </form>
+</div>

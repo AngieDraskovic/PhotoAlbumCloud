@@ -1,0 +1,33 @@
+<div class="dialog">
+  <form [formGroup]="createAlbumForm">
+    <h2 class="title">Create Album</h2>
+
+    <app-form-field
+      class="input"
+      [formGroup]="createAlbumForm"
+      [controlName]="'name'"
+      [type]="'text'"
+      [icon]="'fa fa-folder'"
+      [placeholder]="'Album Name'"
+      [errorMessages]="{
+          pattern: 'No special characters allowed'
+       }"
+    >
+    </app-form-field>
+
+    <div class="btn-container">
+      <app-back-button
+        [buttonText]="'BACK'"
+        (onBack)="cancel()"
+      >
+
+      </app-back-button>
+
+      <app-form-button
+        [form]="createAlbumForm"
+        [buttonText]="'Create'"
+        (onSubmit)="create()">
+      </app-form-button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,20 @@
+<div class="find-friends-container">
+  <div class="find-friends-header">
+    <div class="heading">Share file</div>
+    <div class="search">
+      <i class="fa fa-search"></i>
+      <input type="text" placeholder="Enter a username..." (keyup.enter)="onEnter($event)">
+    </div>
+  </div>
+  <div class="find-friends-body">
+    <div class="user-row" *ngFor="let user of sharedWith">
+      <div class="user-info">
+        <img ngSrc="assets/images/profile.png" alt="user" height="64" width="64">
+        <span>{{user}}</span>
+      </div>
+      <button class="action-follow" (click)="revokeFileSharing(user)">
+        Unshare
+      </button>
+    </div>
+  </div>
+</div>
