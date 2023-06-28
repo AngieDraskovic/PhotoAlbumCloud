@@ -26,8 +26,8 @@ export class AccountCreationFormComponent implements OnInit {
   referralForm = new FormGroup({
     referralUsername: new FormControl('', [Validators.required]),
     username: new FormControl('', [Validators.required]),
-    password: new FormControl('', [Validators.required, Validators.minLength(6)]),
-    confirmPassword: new FormControl('', [Validators.required, Validators.pattern(this.passwordPattern)])
+    password: new FormControl('', [Validators.required, Validators.minLength(8), Validators.pattern(this.passwordPattern)]),
+    confirmPassword: new FormControl('', [Validators.required])
   }, {validators: [match('password', 'confirmPassword')]});
 
   @Output() onFormSubmit = new EventEmitter<void>();
@@ -53,7 +53,7 @@ export class AccountCreationFormComponent implements OnInit {
       };
     } else if (this.activeTab === "referral" && this.referralForm.valid) {
       accountData = {
-        referralUsername: this.referralForm.value['referralUsername'] ?? "",
+        invited_by: this.referralForm.value['referralUsername'] ?? "",
         username: this.referralForm.value['username'] ?? "",
         password: this.referralForm.value['password'] ?? "",
         confirmPassword: this.referralForm.value['confirmPassword'] ?? "",
@@ -69,8 +69,6 @@ export class AccountCreationFormComponent implements OnInit {
         this.onFormSubmit.emit();
       },
       error: (error) => {
-        console.log(error);
-
         if (error.status == 409) {
           this.notificationService.showWarning("Username taken", "Username is already taken!", "topLeft");
         }

@@ -2,19 +2,19 @@ import {Injectable} from '@angular/core';
 import {HttpClient, HttpErrorResponse} from "@angular/common/http";
 import {catchError, Observable, throwError} from "rxjs";
 import {Album} from "../models/album";
-import {UploadData} from "../models/upload-data";
+import {environment} from "../../../../environments/environment";
 
 @Injectable({
   providedIn: 'root'
 })
 export class AlbumService {
-  private apiUrl = 'https://39f7siu2g1.execute-api.us-east-1.amazonaws.com/album';
+  private readonly apiUrl = `${environment.apiUrl}/album`;
 
   constructor(private http: HttpClient) {
   }
 
   createAlbum(albumName: string) {
-    const api = `${this.apiUrl}/create`;
+    const api = `${this.apiUrl}`;
     const payload = {
       album_name: albumName
     };
@@ -26,7 +26,7 @@ export class AlbumService {
   }
 
   getAlbum(albumName: string): Observable<Album> {
-    const api = `${this.apiUrl}/get`;
+    const api = `${this.apiUrl}`;
 
     return this.http.get<Album>(api, {
       params: {album_name: albumName}
@@ -36,7 +36,7 @@ export class AlbumService {
   }
 
   deleteAlbum(albumName: string) {
-    const api = `${this.apiUrl}/delete`;
+    const api = `${this.apiUrl}`;
     return this.http.delete(api, {
       params: {album_name: albumName}
     }).pipe(

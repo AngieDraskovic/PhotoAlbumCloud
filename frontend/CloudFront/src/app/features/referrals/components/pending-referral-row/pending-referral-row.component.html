@@ -1,0 +1,23 @@
+<tr>
+  <td>
+    <img ngSrc="assets/images/profile.png" width="40" height="40" alt="">
+    <p>{{ getName() }}</p>
+  </td>
+  <td class="status">{{ getStatus() }}</td>
+  <td>
+    <button mat-icon-button [matMenuTriggerFor]="folderMenu">
+      <mat-icon>more_vert</mat-icon>
+    </button>
+
+    <mat-menu #folderMenu="matMenu">
+      <button mat-menu-item (click)="acceptReferralClick()">
+        <mat-icon>check</mat-icon>
+        <span>Accept</span>
+      </button>
+      <button mat-menu-item (click)="declineReferralClick()">
+        <mat-icon>delete</mat-icon>
+        <span>Decline</span>
+      </button>
+    </mat-menu>
+  </td>
+</tr>

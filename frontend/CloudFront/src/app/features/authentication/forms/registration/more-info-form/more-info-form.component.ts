@@ -6,13 +6,14 @@ import {UserService} from "../../../../../core/services/user.service";
 import {UserRegistrationData} from "../../../models/user-registration-data";
 import {Router} from "@angular/router";
 import {AccountData} from "../../../models/account-data";
+import {UserReferralRegistrationData} from "../../../models/user-referral-registration-data";
 
 @Component({
   selector: 'app-more-info-form',
   templateUrl: './more-info-form.component.html',
   styleUrls: ['./more-info-form.component.css']
 })
-export class MoreInfoFormComponent implements OnInit{
+export class MoreInfoFormComponent implements OnInit {
   allTextPattern = "[a-zA-Z][a-zA-Z]*";
   datePattern = "^[12][0-9]{3}-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[01])$";
 
@@ -46,6 +47,14 @@ export class MoreInfoFormComponent implements OnInit{
   }
 
   submitForm() {
+    if (this.formData?.isReferral) {
+      this.registerWithReferral()
+    } else {
+      this.regularRegistration();
+    }
+  }
+
+  regularRegistration() {
     if (!this.moreInfoForm.valid || !this.formData) {
       return;
     }
@@ -59,11 +68,34 @@ export class MoreInfoFormComponent implements OnInit{
       password: this.formData.data.password,
     };
 
-    console.log(user);
-
     this.userService.registerUser(user).subscribe({
       next: () => {
         this.notificationService.showSuccess("Successful registration", "You have to confirm email that is sent to you", "topLeft");
+      },
+      error: (error) => {
+        this.notificationService.showDefaultError("topLeft");
+      }
+    })
+  }
+
+  registerWithReferral() {
+    if (!this.moreInfoForm.valid || !this.formData || !this.formData.data.invited_by) {
+      return;
+    }
+
+    const user: UserReferralRegistrationData = {
+      first_name: this.moreInfoForm.get('name')?.value ?? '',
+      last_name: this.moreInfoForm.get('surname')?.value ?? '',
+      email: this.moreInfoForm.get('email')?.value ?? '',
+      date_of_birth: this.moreInfoForm.get('dateOfBirth')?.value ?? '',
+      username: this.formData.data.username,
+      password: this.formData.data.password,
+      invited_by: this.formData.data.invited_by
+    };
+
+    this.userService.registerUserWithReferral(user).subscribe({
+      next: () => {
+        this.notificationService.showSuccess("Successful referral registration", "User has to accept your request first", "topLeft");
       },
       error: (error) => {
         this.notificationService.showDefaultError("topLeft");

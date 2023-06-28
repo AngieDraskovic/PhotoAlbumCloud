@@ -1,0 +1,41 @@
+<main>
+  <div class="head-title">
+    <div class="left">
+      <h1>Pending Referrals</h1>
+      <ul class="breadcrumb">
+        <li>
+          <a href="#">Home</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="table-data">
+    <div class="order">
+      <div class="head">
+        <h3>All requests</h3>
+        <i class='bx bx-search'></i>
+        <i class='bx bx-filter'></i>
+      </div>
+      <table>
+        <thead>
+        <tr>
+          <th>Username</th>
+          <th>Status</th>
+          <th class="table-button"></th>
+        </tr>
+        </thead>
+        <tbody>
+        <app-pending-referral-row
+          class="table-line"
+          *ngFor="let request of pendingReferrals"
+          [item]="request"
+          [acceptReferral]="acceptReferral.bind(this)"
+          [declineReferral]="declineReferral.bind(this)"
+        >
+        </app-pending-referral-row>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>

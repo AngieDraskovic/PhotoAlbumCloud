@@ -15,12 +15,14 @@ export class AuthInterceptor implements HttpInterceptor {
   }
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-    const authToken = this.authService.getAuthToken();
-    request = request.clone({
-      setHeaders: {
-        Authorization: "Bearer " + authToken
-      }
-    });
+    if (!request.url.includes('https://photoalbumbuckett.s3.amazonaws.com/')) {
+      const authToken = this.authService.getAuthToken();
+      request = request.clone({
+        setHeaders: {
+          Authorization: "Bearer " + authToken
+        }
+      });
+    }
 
     return next.handle(request);
   }

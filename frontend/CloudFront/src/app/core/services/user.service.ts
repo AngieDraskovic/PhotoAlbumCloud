@@ -3,6 +3,7 @@ import {environment} from "../../../environments/environment";
 import {HttpClient, HttpErrorResponse, HttpParams} from "@angular/common/http";
 import {catchError, Observable, throwError} from "rxjs";
 import {UserRegistrationData} from "../../features/authentication/models/user-registration-data";
+import {UserReferralRegistrationData} from "../../features/authentication/models/user-referral-registration-data";
 
 @Injectable({
   providedIn: 'root'
@@ -18,8 +19,13 @@ export class UserService {
     return this.http.post(api, user).pipe(catchError(this.handleError));
   }
 
+  registerUserWithReferral(user: UserReferralRegistrationData): Observable<any> {
+    let api = `${this.apiUrl}/signup`;
+    return this.http.post(api, user).pipe(catchError(this.handleError));
+  }
+
   checkUsernameAvailability(username: string): Observable<any> {
-    let api = `${this.apiUrl}/authentication/check_username_availability`;
+    let api = `${this.apiUrl}/check_username_availability`;
     const httpOptions = {
       params: new HttpParams().set('username', username)
     };

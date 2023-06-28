@@ -1,5 +1,5 @@
 export interface AccountData {
-  referralUsername?: string;
+  invited_by?: string;
   username: string;
   password: string;
   confirmPassword: string;

@@ -9,7 +9,7 @@ import {HttpClientModule} from "@angular/common/http";
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
 import {NgxSpinnerModule} from "ngx-spinner";
 import {FileManagerModule} from "./features/file-manager/file-manager.module";
-import {MaterialModule} from "./material/material.module";
+import {ReferralsModule} from "./features/referrals/referrals.module";
 
 @NgModule({
   declarations: [
@@ -23,7 +23,8 @@ import {MaterialModule} from "./material/material.module";
     NgxSpinnerModule,
     CoreModule,
     NgToastModule,
-    FileManagerModule
+    FileManagerModule,
+    ReferralsModule
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   providers: [],

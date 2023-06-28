@@ -1,31 +1,33 @@
 import {Injectable} from '@angular/core';
 import {UploadData} from "../models/upload-data";
-import {catchError, Observable, throwError} from "rxjs";
+import {catchError, throwError} from "rxjs";
 import {HttpClient, HttpErrorResponse} from "@angular/common/http";
 import {saveAs} from 'file-saver';
 import {FileResponse} from "../models/file-response";
 import {SharedWithResponse} from "../models/shared-with-response";
 import {SharedFilesResponse} from "../models/shared-files-response";
 import {UpdateFile} from "../models/update-file";
+import {environment} from "../../../../environments/environment";
+import * as FileSaver from 'file-saver';
 
 @Injectable({
   providedIn: 'root'
 })
 export class FileService {
-  private apiUrl = 'https://39f7siu2g1.execute-api.us-east-1.amazonaws.com/file';
+  private readonly apiUrl = `${environment.apiUrl}/file`;
 
   constructor(private http: HttpClient) {
   }
 
   getSharedFiles() {
-    const api = `${this.apiUrl}/get-shared-files`;
+    const api = `${this.apiUrl}/shared`;
     return this.http.get<SharedFilesResponse>(api).pipe(
       catchError(this.handleError)
     );
   }
 
   getSharedWith(albumName: string, fileName: string) {
-    const api = `${this.apiUrl}/get-shared-with`;
+    const api = `${this.apiUrl}/sharedwith`;
     const params = {
       album_name: albumName,
       file_name: fileName
@@ -59,8 +61,6 @@ export class FileService {
       unshare_with: shareWith
     };
 
-    console.log(body);
-
     return this.http.put(api, body)
       .pipe(
         catchError(this.handleError)
@@ -68,7 +68,7 @@ export class FileService {
   }
 
   getFile(albumName: string, fileName: string) {
-    const api = `${this.apiUrl}/get`;
+    const api = `${this.apiUrl}`;
     const params = {
       album_name: albumName,
       file_name: fileName
@@ -78,37 +78,21 @@ export class FileService {
   }
 
   downloadFile(albumName: string, fileName: string, extension: string) {
-    const api = `${this.apiUrl}/get`;
+    const api = `${this.apiUrl}/download`;
     const params = {
       album_name: albumName,
       file_name: fileName
     };
 
-    this.http.get<FileResponse>(api, {params}).subscribe(response => {
-      const data = response.file_content_base64;
-      const byteCharacters = atob(data);
-      const byteArrays = [];
-
-      for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-        const slice = byteCharacters.slice(offset, offset + 512);
-        const byteNumbers = new Array(slice.length);
-
-        for (let i = 0; i < slice.length; i++) {
-          byteNumbers[i] = slice.charCodeAt(i);
-        }
-
-        const byteArray = new Uint8Array(byteNumbers);
-        byteArrays.push(byteArray);
-      }
-
-      const blob = new Blob(byteArrays, {type: extension});
-
-      saveAs(blob, fileName);
-    });
+    this.http.get<{download_url: string}>(api, {params})
+      .subscribe((response) => {
+        const downloadUrl = response.download_url;
+        this.downloadFromUrl(downloadUrl, fileName);
+      });
   }
 
   downloadSharedFile(fileName: string, sharedBy: string, extension: string) {
-    const api = `${this.apiUrl}/get`;
+    const api = `${this.apiUrl}/download`;
     let pathParts = fileName.split('/');
     let realFileName = pathParts.pop() ?? "";
     let albumName = pathParts.join('/');
@@ -119,31 +103,21 @@ export class FileService {
       shared_by: sharedBy,
     };
 
-    this.http.get<FileResponse>(api, {params}).subscribe(response => {
-      const data = response.file_content_base64;
-      const byteCharacters = atob(data);
-      const byteArrays = [];
+    this.http.get<{download_url: string}>(api, {params})
+      .subscribe((response) => {
+        const downloadUrl = response.download_url;
+        this.downloadFromUrl(downloadUrl, realFileName);
+      });
+  }
 
-      for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-        const slice = byteCharacters.slice(offset, offset + 512);
-        const byteNumbers = new Array(slice.length);
-
-        for (let i = 0; i < slice.length; i++) {
-          byteNumbers[i] = slice.charCodeAt(i);
-        }
-
-        const byteArray = new Uint8Array(byteNumbers);
-        byteArrays.push(byteArray);
-      }
-
-      const blob = new Blob(byteArrays, {type: extension});
-
-      saveAs(blob, realFileName);
+  downloadFromUrl(url: string, fileName: string) {
+    this.http.get(url, {responseType: 'blob'}).subscribe((response: Blob) => {
+      saveAs(response, fileName);
     });
   }
 
   uploadFile(uploadData: UploadData) {
-    const api = `${this.apiUrl}/create`;
+    const api = `${this.apiUrl}`;
     return this.http.post(api, uploadData)
       .pipe(
         catchError(this.handleError)
@@ -151,7 +125,7 @@ export class FileService {
   }
 
   updateFile(updateData: UpdateFile) {
-    const api = `${this.apiUrl}/update`;
+    const api = `${this.apiUrl}`;
     return this.http.put(api, updateData)
       .pipe(
         catchError(this.handleError)
@@ -159,7 +133,7 @@ export class FileService {
   }
 
   deleteFile(albumName: string, fileName: string) {
-    const api = `${this.apiUrl}/delete`;
+    const api = `${this.apiUrl}`;
     return this.http.delete(api, {
       params: {album_name: albumName, file_name: fileName}
     }).pipe(
