@@ -5,6 +5,7 @@ import {match} from "../../../../../shared/utilities/match.validator";
 import {UserRegistrationDataService} from "../../../services/user-registration-data.service";
 import {UserService} from "../../../../../core/services/user.service";
 import {AccountData} from "../../../models/account-data";
+import {of, switchMap} from "rxjs";
 
 @Component({
   selector: 'app-account-creation-form',
@@ -63,12 +64,32 @@ export class AccountCreationFormComponent implements OnInit {
       return;
     }
 
-    this.userService.checkUsernameAvailability(accountData.username).subscribe({
-      next: () => {
+    const checkReferralUsername$ = isReferral ?
+      this.userService.checkUsernameAvailability(this.referralForm.value['referralUsername'] ?? "") :
+      of(true);
+
+    checkReferralUsername$.pipe(
+      switchMap((available) => {
+        if (isReferral && available) {
+          this.notificationService.showWarning("Referral username does not exist", "Referral username does not exist!", "topLeft");
+          throw 'Referral username does not exist';
+        }
+        return this.userService.checkUsernameAvailability(accountData.username)
+      })
+    ).subscribe({
+      next: (available) => {
+        if (!available) {
+          this.notificationService.showWarning("Username taken", "Username is already taken!", "topLeft");
+          return
+        }
+
         this.registrationDataService.setRegistrationData({isReferral: isReferral, data: accountData});
         this.onFormSubmit.emit();
       },
       error: (error) => {
+        if (typeof error === 'string') {
+          return;
+        }
         if (error.status == 409) {
           this.notificationService.showWarning("Username taken", "Username is already taken!", "topLeft");
         }

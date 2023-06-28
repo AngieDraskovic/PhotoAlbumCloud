@@ -41,4 +41,10 @@ export class RegisterComponent implements OnInit {
     this.animationType = AnimationType.SLIDE_IN_LEFT;
     this.currentStep = RegisterStep.AccountCreationForm;
   }
+
+  onFinish() {
+    this.accountCreationForm.reset();
+    this.animationType = AnimationType.SLIDE_IN_LEFT;
+    this.currentStep = RegisterStep.AccountCreationForm;
+  }
 }

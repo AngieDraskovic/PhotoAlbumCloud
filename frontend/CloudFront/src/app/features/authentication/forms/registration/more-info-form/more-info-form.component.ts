@@ -26,6 +26,7 @@ export class MoreInfoFormComponent implements OnInit {
 
   @Output() onBack = new EventEmitter<void>();
   @Output() onFormSubmit = new EventEmitter<void>();
+  @Output() onFinish = new EventEmitter<void>();
 
   private formData: { isReferral: boolean, data: AccountData } | null = null;
 
@@ -70,6 +71,9 @@ export class MoreInfoFormComponent implements OnInit {
 
     this.userService.registerUser(user).subscribe({
       next: () => {
+        this.reset();
+        this.onFinish.emit();
+
         this.notificationService.showSuccess("Successful registration", "You have to confirm email that is sent to you", "topLeft");
       },
       error: (error) => {
@@ -95,6 +99,9 @@ export class MoreInfoFormComponent implements OnInit {
 
     this.userService.registerUserWithReferral(user).subscribe({
       next: () => {
+        this.reset();
+        this.onFinish.emit();
+
         this.notificationService.showSuccess("Successful referral registration", "User has to accept your request first", "topLeft");
       },
       error: (error) => {

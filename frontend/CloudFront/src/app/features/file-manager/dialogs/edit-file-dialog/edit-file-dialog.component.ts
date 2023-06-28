@@ -23,7 +23,8 @@ export class EditFileDialogComponent implements OnInit {
 
   file: File | null = null;
   fileContent: string | undefined = undefined;
-  fileType : string = "";
+  fileType: string = "";
+  fileSize: number = 0;
 
   constructor(private dialogRef: MatDialogRef<EditFileDialogComponent>,
               @Inject(MAT_DIALOG_DATA) public data: any,
@@ -42,6 +43,7 @@ export class EditFileDialogComponent implements OnInit {
 
       this.tags = data.file.tags.slice(0, this.maxTags);
       this.fileType = data.file.file_type;
+      this.fileSize = data.file.file_size;
 
       const reader = new FileReader();
       reader.onload = () => {
@@ -101,6 +103,7 @@ export class EditFileDialogComponent implements OnInit {
         this.fileContent = reader.result?.toString();
         if (this.fileContent != undefined) {
           this.fileContent = this.fileContent.split(',')[1];
+          this.fileSize = Math.floor(file.size / 1024);
         }
       }
       reader.readAsDataURL(file);
@@ -118,6 +121,7 @@ export class EditFileDialogComponent implements OnInit {
       const updateFile: UpdateFile = {
         album_name: this.currentPath,
         file_name: fileName,
+        file_size: this.fileSize,
         description: this.uploadFileForm.get('description')?.value ?? "",
         tags: this.tags,
         new_file_content_base64: this.fileContent,

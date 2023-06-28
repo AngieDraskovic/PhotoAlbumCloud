@@ -24,12 +24,12 @@ export class UserService {
     return this.http.post(api, user).pipe(catchError(this.handleError));
   }
 
-  checkUsernameAvailability(username: string): Observable<any> {
+  checkUsernameAvailability(username: string): Observable<boolean> {
     let api = `${this.apiUrl}/check_username_availability`;
     const httpOptions = {
       params: new HttpParams().set('username', username)
     };
-    return this.http.get(api, httpOptions).pipe(catchError(this.handleError));
+    return this.http.get<boolean>(api, httpOptions).pipe(catchError(this.handleError));
   }
 
   handleError(error: HttpErrorResponse) {
