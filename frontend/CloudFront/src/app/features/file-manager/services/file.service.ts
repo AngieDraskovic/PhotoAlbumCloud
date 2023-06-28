@@ -92,7 +92,7 @@ export class FileService {
   }
 
   downloadSharedFile(fileName: string, sharedBy: string, extension: string) {
-    const api = `${this.apiUrl}/download`;
+    const api = `${environment.apiUrl}/download-shared-file`;
     let pathParts = fileName.split('/');
     let realFileName = pathParts.pop() ?? "";
     let albumName = pathParts.join('/');
@@ -102,6 +102,8 @@ export class FileService {
       file_name: realFileName,
       shared_by: sharedBy,
     };
+
+    console.log(params);
 
     this.http.get<{download_url: string}>(api, {params})
       .subscribe((response) => {

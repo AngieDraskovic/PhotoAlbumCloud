@@ -27,6 +27,7 @@ export class SharedWithMeComponent implements OnInit {
     this.fileService.getSharedFiles().subscribe({
       next: (sharedFileResponse) => {
         this.sharedFiles = sharedFileResponse.shared_files;
+        this.sharedFiles.sort((a, b) => new Date(b.share_time).getTime() - new Date(a.share_time).getTime());
       },
       error: (error) => {
         this.notificationService.showDefaultError("topRight");
