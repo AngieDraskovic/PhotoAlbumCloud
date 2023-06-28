@@ -11,6 +11,8 @@ import { ShareFileDialogComponent } from './dialogs/share-file-dialog/share-file
 import { SharedWithMeComponent } from './components/shared-with-me/shared-with-me.component';
 import { SharedFileRowComponent } from './components/shared-file-row/shared-file-row.component';
 import { EditFileDialogComponent } from './dialogs/edit-file-dialog/edit-file-dialog.component';
+import { ShareAlbumDialogComponent } from './dialogs/share-album-dialog/share-album-dialog.component';
+import { UnshareAlbumDialogComponent } from './dialogs/unshare-album-dialog/unshare-album-dialog.component';
 
 
 
@@ -23,7 +25,9 @@ import { EditFileDialogComponent } from './dialogs/edit-file-dialog/edit-file-di
     ShareFileDialogComponent,
     SharedWithMeComponent,
     SharedFileRowComponent,
-    EditFileDialogComponent
+    EditFileDialogComponent,
+    ShareAlbumDialogComponent,
+    UnshareAlbumDialogComponent
   ],
   exports: [
     FileFolderRowComponent

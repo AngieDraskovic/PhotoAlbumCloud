@@ -34,6 +34,14 @@
     </mat-menu>
 
     <mat-menu #folderMenu="matMenu">
+      <button mat-menu-item (click)="openShareAlbumDialogClick()">
+        <mat-icon>share</mat-icon>
+        <span>Share</span>
+      </button>
+      <button mat-menu-item (click)="openUnshareAlbumDialogClick()">
+        <mat-icon>stop_screen_share</mat-icon>
+        <span>Unshare</span>
+      </button>
       <button mat-menu-item (click)="deleteAlbumClick()">
         <mat-icon>delete</mat-icon>
         <span>Delete</span>

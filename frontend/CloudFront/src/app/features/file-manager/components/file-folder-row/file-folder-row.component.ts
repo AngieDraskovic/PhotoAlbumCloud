@@ -14,6 +14,8 @@ export class FileFolderRowComponent implements OnInit {
   @Input() downloadFile!: (fileName: string, fileType: string) => void;
   @Input() deleteFile!: (fileName: string) => void;
   @Input() openShareFileDialog!: (fileName: string) => void;
+  @Input() openShareAlbumDialog!: (albumName: string) => void;
+  @Input() openUnshareAlbumDialog!: (albumName: string) => void;
   @Input() openEditFileDialog!: (file: File) => void;
 
   isFile: boolean = false;
@@ -84,6 +86,18 @@ export class FileFolderRowComponent implements OnInit {
   openShareFileDialogClick() {
     if (this.isFile) {
       this.openShareFileDialog((this.item as File).file_name);
+    }
+  }
+
+  openShareAlbumDialogClick() {
+    if (!this.isFile) {
+      this.openShareAlbumDialog((this.item as Subalbum).name);
+    }
+  }
+
+  openUnshareAlbumDialogClick() {
+    if (!this.isFile) {
+      this.openUnshareAlbumDialog((this.item as Subalbum).name);
     }
   }
 

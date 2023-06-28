@@ -11,6 +11,8 @@ import {UploadFileDialogComponent} from "../../dialogs/upload-file-dialog/upload
 import {FileService} from "../../services/file.service";
 import {ShareFileDialogComponent} from "../../dialogs/share-file-dialog/share-file-dialog.component";
 import {EditFileDialogComponent} from "../../dialogs/edit-file-dialog/edit-file-dialog.component";
+import {ShareAlbumDialogComponent} from "../../dialogs/share-album-dialog/share-album-dialog.component";
+import {UnshareAlbumDialogComponent} from "../../dialogs/unshare-album-dialog/unshare-album-dialog.component";
 
 @Component({
   selector: 'app-my-albums',
@@ -140,6 +142,22 @@ export class MyAlbumsComponent implements OnInit {
       data: {
         currentPath: this.albumName,
         fileName: fileName
+      }
+    });
+  }
+
+  openShareAlbumDialog(albumName: string) {
+    const dialogRef = this.dialog.open(ShareAlbumDialogComponent, {
+      data: {
+        albumName: albumName
+      }
+    });
+  }
+
+  openUnshareAlbumDialog(albumName: string) {
+    const dialogRef = this.dialog.open(UnshareAlbumDialogComponent, {
+      data: {
+        albumName: albumName
       }
     });
   }

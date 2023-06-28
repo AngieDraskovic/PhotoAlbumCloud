@@ -13,6 +13,34 @@ export class AlbumService {
   constructor(private http: HttpClient) {
   }
 
+  shareAlbum(albumName: string, shareWith: string) {
+    const api = `${this.apiUrl}/share`;
+    const payload = {
+      album_name: albumName,
+      share_with: shareWith
+    };
+
+    console.log(payload);
+
+    return this.http.put(api, payload)
+      .pipe(
+        catchError(this.handleError)
+      );
+  }
+
+  unshareAlbum(albumName: string, unshareWith: string) {
+    const api = `${this.apiUrl}/unshare`;
+    const payload = {
+      album_name: albumName,
+      unshare_with: unshareWith
+    };
+
+    return this.http.put(api, payload)
+      .pipe(
+        catchError(this.handleError)
+      );
+  }
+
   createAlbum(albumName: string) {
     const api = `${this.apiUrl}`;
     const payload = {
