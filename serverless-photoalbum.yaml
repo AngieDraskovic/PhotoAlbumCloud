@@ -1,0 +1,1178 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  DeploymentTrigger:
+    Type: String
+    Description: Any change to this value will trigger a new deployment.
+
+Resources:
+  PhotoAlbums:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: PhotoAlbums
+      AttributeDefinitions:
+        - AttributeName: PartitionKey
+          AttributeType: S
+        - AttributeName: SortKey
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PartitionKey
+          KeyType: HASH
+        - AttributeName: SortKey
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+  Invitations:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: Invitations2
+      AttributeDefinitions:
+        - AttributeName: InvitingUser
+          AttributeType: S
+        - AttributeName: InvitedUser
+          AttributeType: S
+        - AttributeName: Status
+          AttributeType: S
+      KeySchema:
+        - AttributeName: InvitingUser
+          KeyType: HASH
+        - AttributeName: InvitedUser
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      GlobalSecondaryIndexes:
+        - IndexName: InvitingUser-Status-index
+          KeySchema:
+            - AttributeName: InvitingUser
+              KeyType: HASH
+            - AttributeName: Status
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+
+  SharedFiles:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: SharedFiles
+      AttributeDefinitions:
+        - AttributeName: file_path
+          AttributeType: S
+        - AttributeName: shared_with
+          AttributeType: S
+        - AttributeName: shared_by
+          AttributeType: S  
+      KeySchema:
+        - AttributeName: file_path
+          KeyType: HASH
+        - AttributeName: shared_with
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      GlobalSecondaryIndexes: 
+        - IndexName: shared_with-file_path-index
+          KeySchema:
+            - AttributeName: shared_with
+              KeyType: HASH
+            - AttributeName: file_path
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+        - IndexName: shared_by-file_path-index 
+          KeySchema:
+            - AttributeName: shared_by
+              KeyType: HASH
+            - AttributeName: file_path
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+
+  SharedAlbums:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: SharedAlbums2
+      AttributeDefinitions:
+        - AttributeName: album_path
+          AttributeType: S
+        - AttributeName: shared_with
+          AttributeType: S
+        - AttributeName: shared_by
+          AttributeType: S
+      KeySchema:
+        - AttributeName: album_path
+          KeyType: HASH
+        - AttributeName: shared_with
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+      GlobalSecondaryIndexes:
+        - IndexName: shared_by-album_path-index
+          KeySchema:
+            - AttributeName: shared_by
+              KeyType: HASH
+            - AttributeName: album_path
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+
+  PhotoAlbumBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: photoalbumbuckett
+
+  LambdaExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource: "arn:aws:s3:::photoalbumbuckett/*"
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:PutItem
+                  - dynamodb:Query
+                  - dynamodb:CreateTable
+                  - dynamodb:DeleteItem
+                Resource: 
+                  - !GetAtt SharedFiles.Arn
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/SharedFiles/index/shared_with-file_path-index"
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/SharedFiles/index/shared_by-file_path-index"
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:PutItem
+                  - dynamodb:Query
+                  - dynamodb:CreateTable
+                  - dynamodb:DeleteItem
+                Resource: 
+                  - !GetAtt Invitations.Arn
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/Invitations/index/InvitingUser-Status-index"
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:PutItem
+                  - dynamodb:Query
+                  - dynamodb:CreateTable
+                  - dynamodb:DeleteItem
+                Resource: 
+                  - !GetAtt SharedAlbums.Arn
+                  - !Sub "arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/SharedAlbums/index/shared_by-album_path-index"
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:PutItem
+                  - dynamodb:Query
+                  - dynamodb:CreateTable
+                  - dynamodb:DeleteItem
+                Resource: !GetAtt PhotoAlbums.Arn
+              - Effect: Allow
+                Action:
+                  - cognito-idp:GetUser
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - cognito-idp:AdminGetUser
+                Resource: arn:aws:cognito-idp:us-east-1:996779202431:userpool/us-east-1_Ta9YzNdVa
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - ses:SendEmail
+                Resource: "*"
+
+
+  LambdaExecutionRole2:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:PutItem
+                  - dynamodb:Query
+                  - dynamodb:CreateTable
+                  - dynamodb:DeleteItem
+                Resource: !GetAtt PhotoAlbums.Arn
+              - Effect: Allow
+                Action:
+                  - cognito-idp:GetUser
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - cognito-idp:AdminGetUser
+                Resource: arn:aws:cognito-idp:us-east-1:996779202431:userpool/us-east-1_Ta9YzNdVa
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+
+  LambdaExecutionRole3:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem  
+                Resource: !GetAtt PhotoAlbums.Arn
+              - Effect: Allow
+                Action:
+                  - cognito-idp:GetUser
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - cognito-idp:AdminGetUser
+                Resource: arn:aws:cognito-idp:us-east-1:996779202431:userpool/us-east-1_Ta9YzNdVa
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+
+  
+  PhotoAlbumApiGatewayAuthorizer: 
+    Type: AWS::ApiGatewayV2::Authorizer
+    Properties: 
+      ApiId: !Ref PhotoAlbumApi
+      AuthorizerType: JWT
+      IdentitySource: 
+        - $request.header.Authorization
+      JwtConfiguration: 
+        Audience: 
+          - '235s9v1o8m3qmta6ld1htfqtsg'
+        Issuer: !Sub
+          - 'https://cognito-idp.${region}.amazonaws.com/${userPoolId}'
+          - region: !Ref AWS::Region
+            userPoolId: 'us-east-1_Ta9YzNdVa'
+      Name: PhotoAlbumApiGatewayAuthorizer
+
+
+  LoginFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: 'LoginFunction'
+      Handler: login.lambda_handler
+      Runtime: python3.7
+      Code:
+        S3Bucket: our-code-bucket
+        S3Key: login_function.zip
+      MemorySize: 128
+      Timeout: 10
+      Role: !GetAtt LambdaExecutionRole2.Arn
+
+  SignUpFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: 'SignUpFunction'
+      Handler: signup.lambda_handler
+      Runtime: python3.7
+      Code:
+        S3Bucket: our-code-bucket
+        S3Key: signup_function.zip
+      MemorySize: 128
+      Timeout: 10
+      Role: !GetAtt LambdaExecutionRole2.Arn
+
+  GetFileFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: 'GetFileFunction'
+      Handler: get_file.lambda_handler
+      Runtime: python3.7
+      Code:
+        S3Bucket: our-code-bucket
+        S3Key: get_file_function.zip
+      MemorySize: 128
+      Timeout: 10
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  CreateFileFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: 'CreateFileFunction'
+      Handler: create_file.lambda_handler
+      Runtime: python3.7
+      Code:
+        S3Bucket: our-code-bucket
+        S3Key: create_file_function.zip
+      MemorySize: 128
+      Timeout: 10
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  CheckUsernameFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: 'CheckUsernameFunction'
+      Handler: check_username_availability.lambda_handler
+      Runtime: python3.7
+      Code:
+        S3Bucket: our-code-bucket
+        S3Key: check_username_availability_function.zip
+      MemorySize: 128
+      Timeout: 10
+      Role: !GetAtt LambdaExecutionRole2.Arn
+  
+  GetAlbumContentFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: 'GetAlbumContentFunction'
+      Handler: get_album_content.lambda_handler
+      Runtime: python3.7
+      Code:
+        S3Bucket: our-code-bucket
+        S3Key: get_album_content_fucntion.zip
+      MemorySize: 128
+      Timeout: 10
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  LoginFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !GetAtt LoginFunction.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: 'apigateway.amazonaws.com'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PhotoAlbumApi}/*/*'
+
+  SignUpFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !GetAtt SignUpFunction.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: 'apigateway.amazonaws.com'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PhotoAlbumApi}/*/*'
+
+  GetFileFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !GetAtt GetFileFunction.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: 'apigateway.amazonaws.com'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PhotoAlbumApi}/*/*'
+
+  CreateFileFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !GetAtt CreateFileFunction.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: 'apigateway.amazonaws.com'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PhotoAlbumApi}/*/*'
+
+  CheckUsernameFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !GetAtt CheckUsernameFunction.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: 'apigateway.amazonaws.com'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PhotoAlbumApi}/*/*'
+
+  GetAlbumContentFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !GetAtt GetAlbumContentFunction.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: 'apigateway.amazonaws.com'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PhotoAlbumApi}/*/*'
+
+  PhotoAlbumApi:
+    Type: 'AWS::ApiGatewayV2::Api'
+    Properties:
+      Name: PhotoAlbumApiGateway
+      ProtocolType: HTTP
+
+  LoginApiIntegration:
+    Type: 'AWS::ApiGatewayV2::Integration'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LoginFunction.Arn}/invocations'
+      PayloadFormatVersion: '2.0'
+
+  SignUpApiIntegration:
+    Type: 'AWS::ApiGatewayV2::Integration'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${SignUpFunction.Arn}/invocations'
+      PayloadFormatVersion: '2.0'
+
+  GetFileApiIntegration:
+    Type: 'AWS::ApiGatewayV2::Integration'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetFileFunction.Arn}/invocations'
+      PayloadFormatVersion: '2.0'
+
+  CreateFileApiIntegration:
+    Type: 'AWS::ApiGatewayV2::Integration'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateFileFunction.Arn}/invocations'
+      PayloadFormatVersion: '2.0'
+
+  CheckUsernameApiIntegration:
+    Type: 'AWS::ApiGatewayV2::Integration'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CheckUsernameFunction.Arn}/invocations'
+      PayloadFormatVersion: '2.0'
+
+  GetAlbumContentFunctionApiIntegration:
+    Type: 'AWS::ApiGatewayV2::Integration'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetAlbumContentFunction.Arn}/invocations'
+      PayloadFormatVersion: '2.0'
+
+  LoginApiRoute:
+    Type: 'AWS::ApiGatewayV2::Route'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      RouteKey: 'POST /login'
+      Target: !Sub 'integrations/${LoginApiIntegration}'
+
+  SignUpApiRoute:
+    Type: 'AWS::ApiGatewayV2::Route'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      RouteKey: 'POST /signup'
+      Target: !Sub 'integrations/${SignUpApiIntegration}'
+
+  GetFileApiRoute:
+    Type: 'AWS::ApiGatewayV2::Route'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      RouteKey: 'GET /file'
+      AuthorizationType: JWT
+      AuthorizerId: !Ref PhotoAlbumApiGatewayAuthorizer
+      Target: !Sub 'integrations/${GetFileApiIntegration}'
+
+  CreateFileApiRoute:
+    Type: 'AWS::ApiGatewayV2::Route'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      RouteKey: 'POST /file'
+      AuthorizationType: JWT
+      AuthorizerId: !Ref PhotoAlbumApiGatewayAuthorizer
+      Target: !Sub 'integrations/${CreateFileApiIntegration}'
+  
+  CheckUsernameApiRoute:
+    Type: 'AWS::ApiGatewayV2::Route'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      RouteKey: 'GET /check_username_availability'
+      Target: !Sub 'integrations/${CheckUsernameApiIntegration}'
+
+  GetAlbumContentApiRoute:
+    Type: 'AWS::ApiGatewayV2::Route'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      RouteKey: 'GET /album'
+      AuthorizationType: JWT
+      AuthorizerId: !Ref PhotoAlbumApiGatewayAuthorizer
+      Target: !Sub 'integrations/${GetAlbumContentFunctionApiIntegration}'
+
+  CreateAlbumFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: 'CreateAlbumFunction'
+      Handler: create_album.lambda_handler
+      Runtime: python3.7
+      Code:
+        S3Bucket: our-code-bucket
+        S3Key: create_album_function.zip
+      MemorySize: 128
+      Timeout: 10
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+
+  CreateAlbumApiIntegration:
+    Type: 'AWS::ApiGatewayV2::Integration'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${CreateAlbumFunction.Arn}/invocations'
+      PayloadFormatVersion: '2.0'
+
+  CreateAlbumApiRoute:
+    Type: 'AWS::ApiGatewayV2::Route'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      RouteKey: 'POST /album'
+      AuthorizationType: JWT
+      AuthorizerId: !Ref PhotoAlbumApiGatewayAuthorizer
+      Target: !Sub 'integrations/${CreateAlbumApiIntegration}'
+
+  CreateAlbumFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !GetAtt CreateAlbumFunction.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: 'apigateway.amazonaws.com'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PhotoAlbumApi}/*/*'
+
+
+  DownloadFileFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: 'DownloadFileFunction'
+      Handler: download_file.lambda_handler
+      Runtime: python3.7
+      Code:
+        S3Bucket: our-code-bucket
+        S3Key: download_file_function.zip
+      MemorySize: 128
+      Timeout: 10
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  DownloadFileApiIntegration:
+    Type: 'AWS::ApiGatewayV2::Integration'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DownloadFileFunction.Arn}/invocations'
+      PayloadFormatVersion: '2.0'
+
+  DownloadFileApiRoute:
+    Type: 'AWS::ApiGatewayV2::Route'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      RouteKey: 'GET /file/download' 
+      AuthorizationType: JWT
+      AuthorizerId: !Ref PhotoAlbumApiGatewayAuthorizer
+      Target: !Sub 'integrations/${DownloadFileApiIntegration}'
+
+  DownloadFileFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !GetAtt DownloadFileFunction.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: 'apigateway.amazonaws.com'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PhotoAlbumApi}/*/*'
+
+  UpdateFileFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: 'UpdateFileFunction'
+      Handler: update_file.lambda_handler
+      Runtime: python3.7
+      Code:
+        S3Bucket: our-code-bucket
+        S3Key: update_file_function.zip
+      MemorySize: 128
+      Timeout: 10
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  UpdateFileApiIntegration:
+    Type: 'AWS::ApiGatewayV2::Integration'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UpdateFileFunction.Arn}/invocations'
+      PayloadFormatVersion: '2.0'
+
+  UpdateFileApiRoute:
+    Type: 'AWS::ApiGatewayV2::Route'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      RouteKey: 'PUT /file' 
+      AuthorizationType: JWT
+      AuthorizerId: !Ref PhotoAlbumApiGatewayAuthorizer
+      Target: !Sub 'integrations/${UpdateFileApiIntegration}'
+
+  UpdateFileFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !GetAtt UpdateFileFunction.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: 'apigateway.amazonaws.com'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PhotoAlbumApi}/*/*'
+
+  ShareFileFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: 'ShareFileFunction'
+      Handler: share_file.lambda_handler
+      Runtime: python3.7
+      Code:
+        S3Bucket: our-code-bucket
+        S3Key: share_file_function.zip
+      MemorySize: 128
+      Timeout: 10
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  ShareFileApiIntegration:
+    Type: 'AWS::ApiGatewayV2::Integration'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ShareFileFunction.Arn}/invocations'
+      PayloadFormatVersion: '2.0'
+
+  ShareFileApiRoute:
+    Type: 'AWS::ApiGatewayV2::Route'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      RouteKey: 'PUT /file/share' 
+      AuthorizationType: JWT
+      AuthorizerId: !Ref PhotoAlbumApiGatewayAuthorizer
+      Target: !Sub 'integrations/${ShareFileApiIntegration}'
+
+  ShareFileFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !GetAtt ShareFileFunction.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: 'apigateway.amazonaws.com'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PhotoAlbumApi}/*/*'
+
+  UnshareFileFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: 'UnshareFileFunction'
+      Handler: unshare_file.lambda_handler
+      Runtime: python3.7
+      Code:
+        S3Bucket: our-code-bucket
+        S3Key: unshare_file_function.zip
+      MemorySize: 128
+      Timeout: 10
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  UnshareFileApiIntegration:
+    Type: 'AWS::ApiGatewayV2::Integration'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UnshareFileFunction.Arn}/invocations'
+      PayloadFormatVersion: '2.0'
+
+  UnshareFileApiRoute:
+    Type: 'AWS::ApiGatewayV2::Route'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      RouteKey: 'PUT /file/unshare' 
+      AuthorizationType: JWT
+      AuthorizerId: !Ref PhotoAlbumApiGatewayAuthorizer
+      Target: !Sub 'integrations/${UnshareFileApiIntegration}'
+
+  UnshareFileFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !GetAtt UnshareFileFunction.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: 'apigateway.amazonaws.com'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PhotoAlbumApi}/*/*'
+
+  GetSharedFilesFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: 'GetSharedFilesFunction'
+      Handler: get_shared_files.lambda_handler
+      Runtime: python3.7
+      Code:
+        S3Bucket: our-code-bucket
+        S3Key: get_shared_files_function.zip
+      MemorySize: 128
+      Timeout: 10
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  GetSharedFilesApiIntegration:
+    Type: 'AWS::ApiGatewayV2::Integration'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetSharedFilesFunction.Arn}/invocations'
+      PayloadFormatVersion: '2.0'
+
+  GetSharedFilesApiRoute:
+    Type: 'AWS::ApiGatewayV2::Route'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      RouteKey: 'GET /file/shared'
+      AuthorizationType: JWT
+      AuthorizerId: !Ref PhotoAlbumApiGatewayAuthorizer
+      Target: !Sub 'integrations/${GetSharedFilesApiIntegration}'
+
+  GetSharedFilesFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !GetAtt GetSharedFilesFunction.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: 'apigateway.amazonaws.com'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PhotoAlbumApi}/*/*'
+
+  GetSharedWithFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: 'GetSharedWithFunction'
+      Handler: get_shared_with.lambda_handler
+      Runtime: python3.7
+      Code:
+        S3Bucket: our-code-bucket
+        S3Key: get_shared_with_function.zip
+      MemorySize: 128
+      Timeout: 10
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  GetSharedWithApiIntegration:
+    Type: 'AWS::ApiGatewayV2::Integration'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetSharedWithFunction.Arn}/invocations'
+      PayloadFormatVersion: '2.0'
+
+  GetSharedWithApiRoute:
+    Type: 'AWS::ApiGatewayV2::Route'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      RouteKey: 'GET /file/sharedwith'
+      AuthorizationType: JWT
+      AuthorizerId: !Ref PhotoAlbumApiGatewayAuthorizer
+      Target: !Sub 'integrations/${GetSharedWithApiIntegration}'
+
+  GetSharedWithFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !GetAtt GetSharedWithFunction.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: 'apigateway.amazonaws.com'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PhotoAlbumApi}/*/*'
+
+
+  ShareAlbumFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: 'ShareAlbumFunction'
+      Handler: share_album.lambda_handler
+      Runtime: python3.7
+      Code:
+        S3Bucket: our-code-bucket
+        S3Key: share_album_function.zip
+      MemorySize: 128
+      Timeout: 10
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  ShareAlbumApiIntegration:
+    Type: 'AWS::ApiGatewayV2::Integration'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${ShareAlbumFunction.Arn}/invocations'
+      PayloadFormatVersion: '2.0'
+
+  ShareAlbumApiRoute:
+    Type: 'AWS::ApiGatewayV2::Route'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      RouteKey: 'PUT /album/share' 
+      AuthorizationType: JWT
+      AuthorizerId: !Ref PhotoAlbumApiGatewayAuthorizer
+      Target: !Sub 'integrations/${ShareAlbumApiIntegration}'
+
+  ShareAlbumFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !GetAtt ShareAlbumFunction.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: 'apigateway.amazonaws.com'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PhotoAlbumApi}/*/*'
+
+  UnshareAlbumFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: 'UnshareAlbumFunction'
+      Handler: unshare_album.lambda_handler
+      Runtime: python3.7
+      Code:
+        S3Bucket: our-code-bucket
+        S3Key: unshare_album_function.zip
+      MemorySize: 128
+      Timeout: 10
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  UnshareAlbumApiIntegration:
+    Type: 'AWS::ApiGatewayV2::Integration'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UnshareAlbumFunction.Arn}/invocations'
+      PayloadFormatVersion: '2.0'
+
+  UnshareAlbumApiRoute:
+    Type: 'AWS::ApiGatewayV2::Route'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      RouteKey: 'PUT /album/unshare' 
+      AuthorizationType: JWT
+      AuthorizerId: !Ref PhotoAlbumApiGatewayAuthorizer
+      Target: !Sub 'integrations/${UnshareAlbumApiIntegration}'
+
+  UnshareAlbumFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !GetAtt UnshareAlbumFunction.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: 'apigateway.amazonaws.com'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PhotoAlbumApi}/*/*'
+
+  DeleteFileFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: 'DeleteFileFunction'
+      Handler: delete_file.lambda_handler
+      Runtime: python3.7
+      Code:
+        S3Bucket: our-code-bucket
+        S3Key: delete_file_function.zip 
+      MemorySize: 128
+      Timeout: 10
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  DeleteFileApiIntegration:
+    Type: 'AWS::ApiGatewayV2::Integration'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DeleteFileFunction.Arn}/invocations'
+      PayloadFormatVersion: '2.0'
+
+  DeleteFileApiRoute:
+    Type: 'AWS::ApiGatewayV2::Route'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      RouteKey: 'DELETE /file' 
+      AuthorizationType: JWT
+      AuthorizerId: !Ref PhotoAlbumApiGatewayAuthorizer
+      Target: !Sub 'integrations/${DeleteFileApiIntegration}'
+
+  DeleteFileFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !GetAtt DeleteFileFunction.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: 'apigateway.amazonaws.com'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PhotoAlbumApi}/*/*'
+
+  DeleteAlbumFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: 'DeleteAlbumFunction'
+      Handler: delete_album.lambda_handler
+      Runtime: python3.7
+      Code:
+        S3Bucket: our-code-bucket 
+        S3Key: delete_album_function.zip 
+      MemorySize: 128
+      Timeout: 10
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  DeleteAlbumApiIntegration:
+    Type: 'AWS::ApiGatewayV2::Integration'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DeleteAlbumFunction.Arn}/invocations'
+      PayloadFormatVersion: '2.0'
+
+  DeleteAlbumApiRoute:
+    Type: 'AWS::ApiGatewayV2::Route'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      RouteKey: 'DELETE /album' 
+      AuthorizationType: JWT
+      AuthorizerId: !Ref PhotoAlbumApiGatewayAuthorizer
+      Target: !Sub 'integrations/${DeleteAlbumApiIntegration}'
+
+  DeleteAlbumFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !GetAtt DeleteAlbumFunction.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: 'apigateway.amazonaws.com'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PhotoAlbumApi}/*/*'
+
+  DenyInvitationFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: 'DenyInvitationFunction'
+      Handler: deny_invitation.lambda_handler
+      Runtime: python3.7
+      Code:
+        S3Bucket: our-code-bucket
+        S3Key: deny_invitation_function.zip
+      MemorySize: 128
+      Timeout: 10
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  DenyInvitationApiIntegration:
+    Type: 'AWS::ApiGatewayV2::Integration'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DenyInvitationFunction.Arn}/invocations'
+      PayloadFormatVersion: '2.0'
+
+  DenyInvitationApiRoute:
+    Type: 'AWS::ApiGatewayV2::Route'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      RouteKey: 'PUT /invitations/decline2' 
+      AuthorizationType: JWT
+      AuthorizerId: !Ref PhotoAlbumApiGatewayAuthorizer
+      Target: !Sub 'integrations/${DenyInvitationApiIntegration}'
+
+  DenyInvitationFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !GetAtt DenyInvitationFunction.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: 'apigateway.amazonaws.com'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PhotoAlbumApi}/*/*'
+
+
+  AcceptInvitationFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: 'AcceptInvitationFunction'
+      Handler: accept_invitation.lambda_handler
+      Runtime: python3.7
+      Code:
+        S3Bucket: our-code-bucket
+        S3Key: accept_invitation_function.zip
+      MemorySize: 128
+      Timeout: 10
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  AcceptInvitationApiIntegration:
+    Type: 'AWS::ApiGatewayV2::Integration'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AcceptInvitationFunction.Arn}/invocations'
+      PayloadFormatVersion: '2.0'
+
+  AcceptInvitationApiRoute:
+    Type: 'AWS::ApiGatewayV2::Route'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      RouteKey: 'PUT /invitations/accept2'  
+      AuthorizationType: JWT
+      AuthorizerId: !Ref PhotoAlbumApiGatewayAuthorizer
+      Target: !Sub 'integrations/${AcceptInvitationApiIntegration}'
+
+  AcceptInvitationFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !GetAtt AcceptInvitationFunction.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: 'apigateway.amazonaws.com'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PhotoAlbumApi}/*/*'
+
+  DownloadSharedFileFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: 'DownloadSharedFileFunction2'
+      Handler: download_shared_file.lambda_handler
+      Runtime: python3.7
+      Code:
+        S3Bucket: our-code-bucket
+        S3Key: download_shared_file_function.zip
+      MemorySize: 128
+      Timeout: 10
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  DownloadSharedFileApiIntegration:
+    Type: 'AWS::ApiGatewayV2::Integration'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DownloadSharedFileFunction.Arn}/invocations'
+      PayloadFormatVersion: '2.0'
+
+  DownloadSharedFileApiRoute:
+    Type: 'AWS::ApiGatewayV2::Route'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      RouteKey: 'GET /download_shared_file2'  
+      AuthorizationType: JWT
+      AuthorizerId: !Ref PhotoAlbumApiGatewayAuthorizer
+      Target: !Sub 'integrations/${DownloadSharedFileApiIntegration}'
+
+  DownloadSharedFileFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !GetAtt DownloadSharedFileFunction.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: 'apigateway.amazonaws.com'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PhotoAlbumApi}/*/*'
+
+  GetInvitationsFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: 'GetInvitationsFunction'
+      Handler: get_invitations.lambda_handler
+      Runtime: python3.7
+      Code:
+        S3Bucket: our-code-bucket
+        S3Key: get_invitations_function.zip
+      MemorySize: 128
+      Timeout: 10
+      Role: !GetAtt LambdaExecutionRole.Arn
+
+  GetInvitationsApiIntegration:
+    Type: 'AWS::ApiGatewayV2::Integration'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri:
+        Fn::Sub: 'arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetInvitationsFunction.Arn}/invocations'
+      PayloadFormatVersion: '2.0'
+
+  GetInvitationsApiRoute:
+    Type: 'AWS::ApiGatewayV2::Route'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      RouteKey: 'GET /invitations/get2' 
+      AuthorizationType: JWT
+      AuthorizerId: !Ref PhotoAlbumApiGatewayAuthorizer
+      Target: !Sub 'integrations/${GetInvitationsApiIntegration}'
+
+  GetInvitationsFunctionPermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !GetAtt GetInvitationsFunction.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: 'apigateway.amazonaws.com'
+      SourceArn: !Sub 'arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${PhotoAlbumApi}/*/*'
+
+
+
+  PhotoAlbumApiGatewayDeployment:
+    Type: 'AWS::ApiGatewayV2::Deployment'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+    DependsOn:
+      - LoginApiRoute
+      - SignUpApiRoute
+      - GetFileApiRoute
+      - CreateFileApiRoute
+      - CheckUsernameApiRoute
+      - GetAlbumContentApiRoute
+      - CreateAlbumApiRoute
+      - DownloadFileApiRoute
+      - UpdateFileApiRoute
+      - ShareFileApiRoute
+      - UnshareFileApiRoute
+      - GetSharedFilesApiRoute
+      - GetSharedWithApiRoute
+      - ShareAlbumApiRoute
+      - UnshareAlbumApiRoute
+      - DeleteFileApiRoute
+      - DeleteAlbumApiRoute
+      - DenyInvitationApiRoute
+      - DownloadSharedFileApiRoute
+      - AcceptInvitationApiRoute
+      - GetInvitationsApiRoute
+
+  PhotoAlbumApiGatewayStage:
+    Type: 'AWS::ApiGatewayV2::Stage'
+    Properties:
+      ApiId: !Ref PhotoAlbumApi
+      DeploymentId: !Ref PhotoAlbumApiGatewayDeployment
+      StageName: def
+      AutoDeploy: true
